@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- dotnet watch 預設監看 wwwroot/**，上傳檔案落到 wwwroot/uploads 會觸發瀏覽器重新整理，
+         把上傳頁的結果洗掉；把這個資料夾排除在監看之外（.NET 10 起支援 DefaultItemExcludes 排除資料夾） -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);wwwroot/uploads/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.7" />
+    <!-- 將傳遞相依的 SQLitePCLRaw 拉高到已修補 SQLite 3.50.4 的版本，修正 CVE-2025-6965（NU1903） -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+    <!-- Swashbuckle 傳遞相依的 Microsoft.OpenApi 2.4.1 有 High 等級弱點（GHSA-v5pm-xwqc-g5wc），明確拉高版本 -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
+  </ItemGroup>
+
+</Project>

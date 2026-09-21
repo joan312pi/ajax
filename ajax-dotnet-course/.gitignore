@@ -1,0 +1,13 @@
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+.vs/
+.vscode/
+appsettings.Development.json
+
+docs/ajax-restful-dotnet.md
+
+# 6-1 檔案上傳的測試檔，不進版控
+MyAjaxApi/wwwroot/uploads/
