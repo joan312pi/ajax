@@ -1,0 +1,7 @@
+@baseUrl = https://jsonplaceholder.typicode.com
+
+
+
+### 分隔線
+
+GET {{baseUrl}}/posts/1

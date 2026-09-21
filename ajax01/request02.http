@@ -1,0 +1,20 @@
+
+@baseUrl=https://jsonplaceholder.typicode.com
+
+GET https://www.pchome.com.tw
+
+
+### 分隔線
+
+# 註解
+
+GET https://tw.yahoo.com
+
+
+
+
+
+
+### 分隔線
+
+GET {{baseUrl}}/posts/1
