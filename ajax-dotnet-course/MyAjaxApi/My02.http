@@ -1,0 +1,20 @@
+
+@baseUrl = http://localhost:5269
+
+### ───────── 第 3 章：Basics ─────────
+
+
+### 新增 → 201 + Location
+POST {{baseUrl}}/api/fruits
+Content-Type: application/json
+
+{
+  "name": "龍眼",
+  "price": 60
+}
+
+### 刪除
+
+DELETE {{baseUrl}}/api/fruits/12
+
+### 
