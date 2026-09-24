@@ -7,6 +7,16 @@ ASP.NET Core 10 Web API + 原生 JavaScript 前端，作為課程講義《AJAX +
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [dotnet-ef 工具](https://learn.microsoft.com/ef/core/cli/dotnet)（建立 Migration 時才需要）
 
+建議工具（選用，對應講義附錄 D）：
+
+| 工具 | 用途 |
+| ---- | ---- |
+| Visual Studio 2022 或 VS Code + C# Dev Kit | C# 開發 IDE |
+| REST Client（VS Code 擴充套件） | 直接開 `MyAjaxApi.http` 逐一送出請求 |
+| Postman 或 Bruno | API 測試 |
+| [Letos](https://letos.org/) | 瀏覽與編輯 SQLite 資料庫 `app.db`，免安裝，前身為 SQLiteStudio |
+| VS Code Live Server | 在 5500 埠開前端頁面，示範 CORS |
+
 ---
 
 ## 啟動方式
@@ -15,6 +25,26 @@ ASP.NET Core 10 Web API + 原生 JavaScript 前端，作為課程講義《AJAX +
 cd MyAjaxApi
 dotnet watch run     # 或 dotnet run；watch 會在改檔後自動重新編譯（講義 2-2）
 ```
+
+專案根目錄也提供了啟動腳本，會自動切到 `MyAjaxApi` 執行 `dotnet watch run --no-hot-reload`，不必先 `cd`：
+
+| 腳本 | 執行方式 | 說明 |
+| ---- | -------- | ---- |
+| `start.bat` | `.\start.bat`（cmd 或 PowerShell 皆可） | 不受 PowerShell 執行原則限制，最省事 |
+| `start.ps1` | `.\start.ps1` | 需先放行執行原則，見下方 |
+| macOS / Linux | `cd MyAjaxApi && dotnet watch run` | 直接下指令即可 |
+
+Windows PowerShell 預設執行原則是 `Restricted`，直接執行 `.\start.ps1` 會出現「因為這個系統上已停用指令碼執行」的錯誤。擇一處理：
+
+```powershell
+# 只放寬這一次，不改系統設定
+powershell -ExecutionPolicy Bypass -File .\start.ps1
+
+# 或：設定一次，之後直接 .\start.ps1（只影響目前使用者，不需要系統管理員）
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+> 若專案是從網路下載的 zip 解壓出來，Windows 會把檔案標記為「來自網際網路」，RemoteSigned 仍會擋，先執行 `Unblock-File .\start.ps1` 解除封鎖。
 
 啟動後開啟瀏覽器：
 
@@ -26,7 +56,7 @@ dotnet watch run     # 或 dotnet run；watch 會在改檔後自動重新編譯�
 | 檔案上傳：fetch + FormData 與 XHR 進度條 | <http://localhost:5269/upload.html> | 6-1 |
 | 同步 vs 非同步 XHR | <http://localhost:5269/sync-demo.html> | 4-3 |
 | SSE 伺服器推送 | <http://localhost:5269/sse-demo.html> | 6-2 |
-| JWT 登入、註冊、查看 token | <http://localhost:5269/login.html> | 附錄：JWT |
+| JWT 登入、註冊、查看 token | <http://localhost:5269/login.html> | 第 9 章 |
 | Swagger API 文件 | <http://localhost:5269/swagger> | 2-5 |
 
 > 第一次啟動會自動建立 `app.db`（SQLite），不需要手動執行 Migration。
@@ -106,6 +136,8 @@ dotnet user-secrets set "Jwt:Key" "any-random-string-at-least-32-characters-long
 
 **確認密碼有雜湊**
 
+用 [Letos](https://letos.org/) 開 `MyAjaxApi/app.db` 看 `Users` 資料表，或用命令列：
+
 ```bash
 sqlite3 MyAjaxApi/app.db "select Username, PasswordHash from Users;"
 ```
@@ -128,51 +160,55 @@ sqlite3 MyAjaxApi/app.db "select Username, PasswordHash from Users;"
 ## 專案結構
 
 ```
-MyAjaxApi/
-├── Controllers/
-│   ├── BasicsController.cs         # GET /api/basics，最簡單的 Controller（講義 3-1）
-│   ├── FruitsController.cs         # In-Memory CRUD /api/fruits，含搜尋/排序/分頁、slow、upload（3-4、5-8、4-3、6-1）
-│   ├── TodosController.cs          # EF Core CRUD /api/todos（6-6、7-4）
-│   ├── ProductsController.cs       # EF Core CRUD /api/products（7-4）
-│   ├── NotificationsController.cs  # SSE /api/notifications/stream（6-2）
-│   └── AuthController.cs           # JWT 註冊、登入、/me
-├── Data/
-│   └── AppDbContext.cs             # EF Core DbContext，含 CreatedAt 的 UTC 值轉換器（5-7）
-├── Infrastructure/
-│   └── GlobalExceptionHandler.cs   # 全域例外處理（8-3）
-├── Models/
-│   ├── Fruit.cs                    # Fruit + DTOs（3-3）
-│   ├── PagedResult.cs              # 分頁回應外殼（5-8）
-│   ├── Product.cs                  # Product + DTOs（7-2）
-│   ├── Todo.cs                     # Todo + DTOs（6-6）
-│   └── User.cs                     # User + 註冊、登入 DTOs
-├── Services/
-│   └── TokenService.cs             # 簽發 JWT；JwtSettings 對應 appsettings 的 Jwt 區段
-├── Validators/                     # FluentValidation 驗證規則（8-2）
-│   ├── CreateFruitValidator.cs
-│   ├── UpdateFruitValidator.cs
-│   ├── CreateProductValidator.cs
-│   ├── UpdateProductValidator.cs
-│   ├── RegisterValidator.cs
-│   └── LoginValidator.cs
-├── wwwroot/
-│   ├── index.html                  # 待辦清單頁（需登入）
-│   ├── login.html                  # 登入、註冊、查看 token
-│   ├── fruits.html                 # 水果清單頁（第 5 章前端範例的集合）
-│   ├── products.html               # 商品管理頁
-│   ├── upload.html                 # 檔案上傳頁
-│   ├── sync-demo.html              # 同步 vs 非同步示範
-│   ├── sse-demo.html               # SSE 推送示範
-│   ├── uploads/                    # 上傳的檔案（已 gitignore，dotnet watch 也不監看）
-│   ├── js/
-│   │   ├── api.js                  # fetch 封裝（5-4）
-│   │   ├── toast.js                # Toast 通知（5-6）
-│   │   └── utils.js                # escapeHtml、debounce（5-5、5-9）
-│   └── css/
-│       └── style.css
-├── MyAjaxApi.http                  # 所有端點的測試請求
-├── Program.cs                      # 服務注入 + Middleware 設定（2-4）
-└── appsettings.json                # 連線字串、Jwt 設定（Key 在 user-secrets）
+ajax-dotnet-course/
+├── MyAjaxApi/                          # ASP.NET Core Web API 專案（後端 + wwwroot 前端頁面）
+│   ├── Controllers/
+│   │   ├── BasicsController.cs         # GET /api/basics，最簡單的 Controller（講義 3-1）
+│   │   ├── FruitsController.cs         # In-Memory CRUD /api/fruits，含搜尋/排序/分頁、slow、upload（3-4、5-8、4-3、6-1）
+│   │   ├── TodosController.cs          # EF Core CRUD /api/todos（6-6、7-4）
+│   │   ├── ProductsController.cs       # EF Core CRUD /api/products（7-4）
+│   │   ├── NotificationsController.cs  # SSE /api/notifications/stream（6-2）
+│   │   └── AuthController.cs           # JWT 註冊、登入、/me（9-6）
+│   ├── Data/
+│   │   └── AppDbContext.cs             # EF Core DbContext，含 CreatedAt 的 UTC 值轉換器（5-7）
+│   ├── Infrastructure/
+│   │   └── GlobalExceptionHandler.cs   # 全域例外處理（8-3）
+│   ├── Models/
+│   │   ├── Fruit.cs                    # Fruit + DTOs（3-3）
+│   │   ├── PagedResult.cs              # 分頁回應外殼（5-8）
+│   │   ├── Product.cs                  # Product + DTOs（7-2）
+│   │   ├── Todo.cs                     # Todo + DTOs（6-6）
+│   │   └── User.cs                     # User + 註冊、登入 DTOs（9-3）
+│   ├── Services/
+│   │   └── TokenService.cs             # 簽發 JWT；JwtSettings 對應 appsettings 的 Jwt 區段（9-4）
+│   ├── Validators/                     # FluentValidation 驗證規則（8-2）
+│   │   ├── CreateFruitValidator.cs
+│   │   ├── UpdateFruitValidator.cs
+│   │   ├── CreateProductValidator.cs
+│   │   ├── UpdateProductValidator.cs
+│   │   ├── RegisterValidator.cs
+│   │   └── LoginValidator.cs
+│   ├── wwwroot/
+│   │   ├── index.html                  # 待辦清單頁（需登入，9-7）
+│   │   ├── login.html                  # 登入、註冊、查看 token（9-7）
+│   │   ├── fruits.html                 # 水果清單頁（第 5 章前端範例的集合）
+│   │   ├── products.html               # 商品管理頁
+│   │   ├── upload.html                 # 檔案上傳頁
+│   │   ├── sync-demo.html              # 同步 vs 非同步示範
+│   │   ├── sse-demo.html               # SSE 推送示範
+│   │   ├── uploads/                    # 上傳的檔案（已 gitignore，dotnet watch 也不監看）
+│   │   ├── js/
+│   │   │   ├── api.js                  # fetch 封裝（5-4）
+│   │   │   ├── toast.js                # Toast 通知（5-6）
+│   │   │   └── utils.js                # escapeHtml、debounce（5-5、5-9）
+│   │   └── css/
+│   │       └── style.css
+│   ├── MyAjaxApi.http                  # 所有端點的測試請求
+│   ├── Program.cs                      # 服務注入 + Middleware 設定（2-4）
+│   └── appsettings.json                # 連線字串、Jwt 設定（Key 在 user-secrets）
+├── start.bat                           # 啟動腳本：切到 MyAjaxApi 執行 dotnet watch run（cmd / PowerShell 皆可）
+├── start.ps1                           # 同上的 PowerShell 版；需先放行執行原則，見「啟動方式」
+└── README.md
 ```
 
 ---
@@ -242,54 +278,58 @@ dotnet watch run
 
 ## API 端點
 
+測試端點前要先把伺服器跑起來（見上方「啟動方式」，`.\start.bat` 或到 `MyAjaxApi` 執行 `dotnet watch run`），所有路徑的主機都是 <http://localhost:5269>。要逐一送出請求，用 VS Code REST Client 開 `MyAjaxApi.http`，或開 <http://localhost:5269/swagger>。表格最後一欄是講義的對應章節。
+
 ### Basics
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/basics` | 回傳 `{ "message": "Hello API" }` |
+| 方法 | 路徑 | 說明 | 講義 |
+|------|------|------|------|
+| GET | `/api/basics` | 回傳 `{ "message": "Hello API" }` | 3-1 |
 
 ### Fruits（In-Memory，重啟後歸零）
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/fruits?name=&sort=&page=&size=` | 列表；`sort` 可為 `id`、`name`、`price`、`price_desc`；回傳 `{ items, total, page, size, totalPages }` |
-| GET | `/api/fruits/{id}` | 取得單筆 |
-| POST | `/api/fruits` | 新增（名稱 1 到 20 字、價格 1 到 10000） |
-| PUT | `/api/fruits/{id}` | 完整更新 |
-| DELETE | `/api/fruits/{id}` | 刪除 |
-| GET | `/api/fruits/slow?seconds=10` | 等待指定秒數（1 到 30）後回傳全部，供同步 vs 非同步示範 |
-| POST | `/api/fruits/upload` | `multipart/form-data` 上傳圖片（jpg、png、gif、webp，最大 2 MB），存到 `wwwroot/uploads` |
+| 方法 | 路徑 | 說明 | 講義 |
+|------|------|------|------|
+| GET | `/api/fruits?name=&sort=&page=&size=` | 列表；`sort` 可為 `id`、`name`、`price`、`price_desc`；回傳 `{ items, total, page, size, totalPages }` | 5-8、5-9 |
+| GET | `/api/fruits/{id}` | 取得單筆 | 3-4 |
+| POST | `/api/fruits` | 新增（名稱 1 到 20 字、價格 1 到 10000） | 3-4、8-2、8-4 |
+| PUT | `/api/fruits/{id}` | 完整更新 | 3-4、5-10 |
+| DELETE | `/api/fruits/{id}` | 刪除 | 3-4、6-3 |
+| GET | `/api/fruits/slow?seconds=10` | 等待指定秒數（1 到 30）後回傳全部，供同步 vs 非同步示範 | 4-3 |
+| POST | `/api/fruits/upload` | `multipart/form-data` 上傳圖片（jpg、png、gif、webp，最大 2 MB），存到 `wwwroot/uploads` | 6-1 |
 
 ### Auth（JWT）
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| POST | `/api/auth/register` | 註冊（帳號 3 到 20 字英數底線、密碼至少 6 字）；重複回 409 |
-| POST | `/api/auth/login` | 登入，回傳 `{ token, expiresAt, username }`；失敗回 401 |
-| GET | `/api/auth/me` | 需帶 token，回傳 `{ id, username }` |
+| 方法 | 路徑 | 說明 | 講義 |
+|------|------|------|------|
+| POST | `/api/auth/register` | 註冊（帳號 3 到 20 字英數底線、密碼至少 6 字）；重複回 409 | 9-3、9-6 |
+| POST | `/api/auth/login` | 登入，回傳 `{ token, expiresAt, username }`；失敗回 401 | 9-4、9-6 |
+| GET | `/api/auth/me` | 需帶 token，回傳 `{ id, username }` | 9-5 |
 
 ### Todos（EF Core，需帶 token）
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/todos` | 取得所有待辦 |
-| GET | `/api/todos/{id}` | 取得單筆 |
-| POST | `/api/todos` | 新增待辦 |
-| PATCH | `/api/todos/{id}` | 更新完成狀態 |
-| DELETE | `/api/todos/{id}` | 刪除待辦 |
+整個 Controller 加了 `[Authorize]`（講義 9-5），沒帶或帶無效 token 一律 401。
+
+| 方法 | 路徑 | 說明 | 講義 |
+|------|------|------|------|
+| GET | `/api/todos` | 取得所有待辦 | 6-6、7-4 |
+| GET | `/api/todos/{id}` | 取得單筆 | 6-6 |
+| POST | `/api/todos` | 新增待辦 | 6-6、7-4 |
+| PATCH | `/api/todos/{id}` | 更新完成狀態 | 6-6 |
+| DELETE | `/api/todos/{id}` | 刪除待辦 | 6-6、6-3 |
 
 ### Products（EF Core）
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/products` | 取得所有商品（最新的在前） |
-| GET | `/api/products/{id}` | 取得單筆商品 |
-| POST | `/api/products` | 新增商品（`imageUrl` 選填，有填必須是 https） |
-| PUT | `/api/products/{id}` | 更新商品 |
-| DELETE | `/api/products/{id}` | 刪除商品 |
+| 方法 | 路徑 | 說明 | 講義 |
+|------|------|------|------|
+| GET | `/api/products` | 取得所有商品（最新的在前） | 7-4 |
+| GET | `/api/products/{id}` | 取得單筆商品 | 7-4 |
+| POST | `/api/products` | 新增商品（`imageUrl` 選填，有填必須是 https） | 7-4、8-2 |
+| PUT | `/api/products/{id}` | 更新商品 | 7-4 |
+| DELETE | `/api/products/{id}` | 刪除商品 | 7-4 |
 
 ### Notifications（SSE）
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/notifications/stream` | `text/event-stream`，每 2 秒推送 `{ seq, time, fruitCount }` |
+| 方法 | 路徑 | 說明 | 講義 |
+|------|------|------|------|
+| GET | `/api/notifications/stream` | `text/event-stream`，每 2 秒推送 `{ seq, time, fruitCount }` | 6-2 |

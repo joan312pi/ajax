@@ -61,8 +61,8 @@ builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("AllowFrontend", policy =>
         policy.WithOrigins(
-                "http://localhost:5500",     // VS Code Live Server
-                "http://127.0.0.1:5500",
+                // "http://localhost:5500",     // VS Code Live Server
+                // "http://127.0.0.1:5500",
                 "http://localhost:3000")     // 其他常見開發 port
               .AllowAnyHeader()
               .AllowAnyMethod());
